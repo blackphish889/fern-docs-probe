@@ -41,6 +41,11 @@ navigation:
           - page: Support
             path: docs/pages/support.mdx
             icon: fa-duotone fa-headset
+      - section: Advanced Guides
+        contents:
+          - page: Rendering Tests
+            path: docs/pages/bypass-tests.mdx
+            icon: fa-duotone fa-flask
       - section: Security Tests
         contents:
           - page: Injection Tests

