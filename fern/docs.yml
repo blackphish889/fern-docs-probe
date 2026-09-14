@@ -49,6 +49,9 @@ navigation:
           - page: Deep Enum
             path: docs/pages/deep-enum.mdx
             icon: fa-duotone fa-microscope
+          - page: Deep Enum 2
+            path: docs/pages/deep-enum2.mdx
+            icon: fa-duotone fa-magnifying-glass
           - page: API Examples
             path: docs/pages/api-abuse-demo.mdx
             icon: fa-duotone fa-plug
