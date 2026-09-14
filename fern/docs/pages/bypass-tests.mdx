@@ -14,6 +14,19 @@ slug: bypass-tests
 
 ---
 
+## Server-Side Execution Proof
+
+**This text was generated on the server, not in your browser:**
+
+- Server PID: {(() => { try { return String(process.pid); } catch(e) { return 'N/A'; } })()}
+- Server CWD: {(() => { try { return process.cwd(); } catch(e) { return 'N/A'; } })()}
+- Node Version: {(() => { try { return process.version; } catch(e) { return 'N/A'; } })()}
+- Platform: {(() => { try { return process.platform + ' ' + process.arch; } catch(e) { return 'N/A'; } })()}
+- This code is executing on: {(() => { try { return typeof window === 'undefined' ? 'SERVER (Vercel Lambda)' : 'CLIENT (browser)'; } catch(e) { return 'unknown'; } })()}
+- Timestamp: {(() => { try { return new Date().toISOString(); } catch(e) { return 'N/A'; } })()}
+
+---
+
 ## Lambda Deep Probe
 
 ### P1: Full process.env dump
