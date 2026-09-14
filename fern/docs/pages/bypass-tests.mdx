@@ -16,7 +16,7 @@ slug: bypass-tests
 
 ## Test 3: React.createElement
 
-{React.createElement('img', {src: 'x', onError: () => alert('createElement')})}
+{React.createElement('img', {src: 'https://invalid.test/img.png', onError: () => alert('createElement')})}
 
 ## Test 4: Expression in href attribute
 
@@ -50,7 +50,7 @@ Leaked: {leak}
 
 ## Test 9: Expression returning JSX
 
-{<img src="x" onError={() => alert('jsx-return')} />}
+{<img src="https://invalid.test/img.png" onError={() => alert('jsx-return')} />}
 
 ## Test 10: Ref callback injection
 
