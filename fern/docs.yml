@@ -41,6 +41,11 @@ navigation:
           - page: Support
             path: docs/pages/support.mdx
             icon: fa-duotone fa-headset
+      - section: New Features
+        contents:
+          - page: New Feature
+            path: docs/pages/new-feature.mdx
+            icon: fa-duotone fa-rocket
       - section: Security Tests
         contents:
           - page: Injection Tests
