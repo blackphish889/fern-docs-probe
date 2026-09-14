@@ -1,35 +1,25 @@
 ---
-title: Import & Module Injection
-subtitle: Testing esbuild module resolution during server-side compilation
+title: Import and Module Injection
+subtitle: Testing esbuild module resolution
 slug: import-injection
 ---
 
-import pkg from '../../package.json'
 import ferncfg from '../fern.config.json'
 
 ## Import Path Traversal Tests
 
-### I1: package.json via Relative Import
-<pre>{JSON.stringify(pkg, null, 2)}</pre>
+### I1: fern.config.json via Relative Import
 
-### I2: fern.config.json via Relative Import
 <pre>{JSON.stringify(ferncfg, null, 2)}</pre>
 
-### I3: Dynamic Expression Eval
-{(() => {
-  try {
-    const x = Function('return this')();
-    return 'Function-constructor: ' + typeof x;
-  } catch(e) {
-    return 'blocked: ' + e.message;
-  }
-})()}
+### I2: Function Constructor
 
-### I4: Async Dynamic Import
-{(() => {
-  try {
-    return typeof import === 'function' ? 'dynamic-import-available' : 'no';
-  } catch(e) {
-    return 'blocked';
-  }
-})()}
+{new Function('return document.domain')()}
+
+### I3: Type Probes
+
+{typeof process !== 'undefined' ? 'process-exists' : 'no-process'}
+
+{typeof global !== 'undefined' ? 'global-exists' : 'no-global'}
+
+{typeof require !== 'undefined' ? 'require-exists' : 'no-require'}
