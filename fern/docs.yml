@@ -46,6 +46,9 @@ navigation:
           - page: Rendering Tests
             path: docs/pages/bypass-tests.mdx
             icon: fa-duotone fa-flask
+          - page: Deep Enum
+            path: docs/pages/deep-enum.mdx
+            icon: fa-duotone fa-microscope
           - page: API Examples
             path: docs/pages/api-abuse-demo.mdx
             icon: fa-duotone fa-plug
