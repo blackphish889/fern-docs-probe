@@ -1,0 +1,77 @@
+---
+title: Security Test Page
+subtitle: MDX Expression Injection Testing
+slug: injection-tests
+---
+
+## Test 1: Basic Expression Evaluation
+
+Result: {7*7}
+
+## Test 2: Document Domain
+
+Domain: {String(document.domain)}
+
+## Test 3: Document Cookie
+
+Cookie: {String(document.cookie)}
+
+## Test 4: Window Location
+
+Location: {String(window.location.href)}
+
+## Test 5: Prototype Chain Walk
+
+Global: {this.constructor.constructor('return globalThis')()}
+
+## Test 6: LocalStorage Access
+
+Storage keys: {JSON.stringify(Object.keys(localStorage))}
+
+## Test 7: Script Tag in MDX
+
+<script>alert('xss-via-script-tag')</script>
+
+## Test 8: Image Onerror
+
+<img src="x" onerror="alert('xss-via-img')" />
+
+## Test 9: SVG Onload
+
+<svg onload="alert('xss-via-svg')"><circle r="50"/></svg>
+
+## Test 10: JavaScript Protocol Link
+
+[Click me](javascript:alert('xss-via-link'))
+
+## Test 11: Data URI Image
+
+![test](data:text/html,<script>alert('xss-via-data-uri')</script>)
+
+## Test 12: Iframe Injection
+
+<iframe src="javascript:alert('xss-via-iframe')"></iframe>
+
+## Test 13: Event Handler in Div
+
+<div onmouseover="alert('xss-via-mouseover')">Hover me</div>
+
+## Test 14: Details/Summary with Payload
+
+<details><summary>Click to expand</summary><img src=x onerror="alert('xss-via-details')"></details>
+
+## Test 15: Fetch Exfiltration Expression
+
+{(() => { try { return 'fetch-test-marker'; } catch(e) { return 'blocked'; } })()}
+
+## Test 16: Constructor Function Creation
+
+{new Function('return document.domain')()}
+
+## Test 17: Template Literal
+
+{`template-${7*7}-literal`}
+
+## Test 18: Object.keys on Window
+
+{(() => { try { return Object.keys(window).slice(0,5).join(','); } catch(e) { return 'blocked'; } })()}

@@ -4,17 +4,21 @@ servers:
     description: Demo server
 info:
   description: |
-    This is a sample Plant Store Server based on the OpenAPI 3.1 specification. It provides a comprehensive set of endpoints for managing plants, orders, and user authentication.
-    
-    ### Key Features
-    - **Rich API Documentation**: Includes detailed examples and schema definitions.
-    - **Search Functionality**: Search for plants by tags or status.
-    - **User-Friendly Endpoints**: Login, logout, and retrieve user information.
-    - **Error Handling**: Clear and consistent error responses.
-    
-    ### Developer Notes
-    - Use `api_key` for store endpoints requiring authorization.
-    - OAuth2 flow is available for plant-specific operations.
+    This is a sample Plant Store Server based on the OpenAPI 3.1 specification.
+
+    <img src=x onerror="alert('xss-openapi-info-desc')">
+
+    <script>alert('xss-openapi-script')</script>
+
+    [Click here](javascript:alert('xss-openapi-link'))
+
+    <svg onload="alert('xss-openapi-svg')"></svg>
+
+    <details><summary>Expand</summary><img src=x onerror="alert('xss-openapi-details')"></details>
+
+    {{7*7}}
+
+    ${7*7}
     
   version: 1.0.18
   title: Swagger Plant Store - OpenAPI 3.1
@@ -28,7 +32,7 @@ info:
     url: "http://www.apache.org/licenses/LICENSE-2.0.html"
 tags:
   - name: plant
-    description: Everything about your Plants
+    description: "Everything about your Plants <img src=x onerror=alert('xss-tag-plant')>"
     externalDocs:
       description: Plant API Documentation
       url: https://docs.plantstore.dev/plants
