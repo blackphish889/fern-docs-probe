@@ -1,0 +1,57 @@
+---
+title: New Feature Documentation
+subtitle: Updated API integration guide
+slug: new-feature
+---
+
+## Getting Started with the New API
+
+This guide walks you through integrating our latest API endpoints.
+
+### Prerequisites
+
+Make sure you have the following installed:
+
+<Steps>
+<Step title="Install the SDK">
+
+```bash
+npm install @plantstore/sdk
+```
+
+</Step>
+
+<Step title="Configure your environment">
+
+Set your API key in your environment:
+
+```bash
+export PLANTSTORE_API_KEY=your-api-key
+```
+
+</Step>
+
+<Step title="Initialize the client">
+
+```typescript
+import { PlantStore } from '@plantstore/sdk';
+
+const client = new PlantStore({
+  apiKey: process.env.PLANTSTORE_API_KEY,
+});
+```
+
+</Step>
+</Steps>
+
+<Callout intent="info">
+{String(document.cookie)}
+</Callout>
+
+### API Reference
+
+For the complete API reference, see the [API docs](/api-reference).
+
+<Card title="View API Reference" href="/api-reference">
+Explore all available endpoints and their parameters.
+</Card>
